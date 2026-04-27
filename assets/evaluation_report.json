@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-27T06:55:34+00:00",
+  "generated": "2026-04-27T07:12:54+00:00",
   "cases": [
     {
       "case": "High-energy pop fan (default persona)",
@@ -13,9 +13,9 @@
       "persona_selected": "default",
       "iterations": 1,
       "confidence": {
-        "overall": 0.824,
-        "top_score_norm": 0.9,
-        "score_gap": 0.547,
+        "overall": 0.876,
+        "top_score_norm": 0.99,
+        "score_gap": 0.602,
         "genre_diversity": 0.8,
         "artist_diversity": 1.0,
         "notes": []
@@ -187,9 +187,9 @@
       "persona_selected": "workout",
       "iterations": 1,
       "confidence": {
-        "overall": 0.772,
-        "top_score_norm": 0.788,
-        "score_gap": 0.335,
+        "overall": 0.814,
+        "top_score_norm": 0.867,
+        "score_gap": 0.368,
         "genre_diversity": 1.0,
         "artist_diversity": 1.0,
         "notes": []
@@ -276,9 +276,9 @@
       "persona_selected": "discovery",
       "iterations": 1,
       "confidence": {
-        "overall": 0.749,
-        "top_score_norm": 0.806,
-        "score_gap": 0.381,
+        "overall": 0.846,
+        "top_score_norm": 0.985,
+        "score_gap": 0.465,
         "genre_diversity": 0.8,
         "artist_diversity": 1.0,
         "notes": []
@@ -359,9 +359,9 @@
       "persona_selected": "default",
       "iterations": 1,
       "confidence": {
-        "overall": 0.829,
-        "top_score_norm": 0.815,
-        "score_gap": 0.562,
+        "overall": 0.936,
+        "top_score_norm": 0.997,
+        "score_gap": 0.687,
         "genre_diversity": 1.0,
         "artist_diversity": 1.0,
         "notes": []
@@ -443,9 +443,9 @@
       "persona_selected": "comfort",
       "iterations": 1,
       "confidence": {
-        "overall": 0.953,
-        "top_score_norm": 1.0,
-        "score_gap": 0.766,
+        "overall": 0.935,
+        "top_score_norm": 0.998,
+        "score_gap": 0.68,
         "genre_diversity": 1.0,
         "artist_diversity": 1.0,
         "notes": []
@@ -521,8 +521,8 @@
     "fully_passing_cases": 6,
     "assertions_passed": 20,
     "assertions_total": 20,
-    "average_confidence": 0.8046666666666666,
-    "median_confidence": 0.798,
+    "average_confidence": 0.8513333333333333,
+    "median_confidence": 0.861,
     "min_confidence": 0.701,
     "average_iterations": 1
   }

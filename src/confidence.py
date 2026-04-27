@@ -31,7 +31,7 @@ class ConfidenceReport:
         }
 
 
-# Theoretical max score under default weights (genre+mood+energy+acoustic+valence)
+# Historical fallback for callers that do not pass a persona-aware maximum.
 DEFAULT_MAX_POSSIBLE = 5.5
 
 
@@ -48,6 +48,9 @@ def compute_confidence(
     notes: List[str] = []
     if not scored:
         return ConfidenceReport(0.0, 0.0, 0.0, 0.0, 0.0, ["empty result set"])
+
+    if max_possible <= 0:
+        max_possible = DEFAULT_MAX_POSSIBLE
 
     top_score = scored[0][1]
     top_score_norm = max(0.0, min(1.0, top_score / max_possible))

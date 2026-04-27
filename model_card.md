@@ -82,6 +82,10 @@ For each request the system runs a five-step loop:
 - **Self-correction with a budget.** The reflect / refine loop is
   capped at 2 iterations so it cannot mask catalog problems by
   spinning forever.
+- **Persona-aware confidence normalization.** Confidence is normalized
+  against the active persona weights and only the preference fields
+  present in the request, so discovery/workout runs are not unfairly
+  judged against the default persona's larger score ceiling.
 - **Backward compatibility.** The original Module-3 tests (`Song`,
   `UserProfile`, `Recommender`) still pass unchanged.
 
@@ -117,13 +121,13 @@ For each request the system runs a five-step loop:
 
 ## 7. Evaluation
 
-- **Pytest:** 37 tests across all modules, all passing.
+- **Pytest:** 38 tests across all modules, all passing.
 - **Evaluation harness** (`scripts/run_evaluation.py`): 6 fixed cases
   (covering all five personas, an auto-routing case, and an edge case),
   20 assertions total, **20 / 20 passing**.
 - **Aggregate metrics from the harness:**
-  - average confidence: **0.805** (label: high)
-  - median confidence: **0.798**
+  - average confidence: **0.851** (label: high)
+  - median confidence: **0.861**
   - min confidence: **0.701** (medium — the lofi study case)
   - average iterations: **1.00** (refine is rarely needed on this catalog)
 - **Manual verification:** every persona produced a sensible top result.

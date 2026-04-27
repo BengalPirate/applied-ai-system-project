@@ -98,6 +98,10 @@ def test_refine_step_fires_when_confidence_below_threshold():
     )
     refine_steps = [s for s in result.trace if s.name == "refine"]
     assert refine_steps, f"expected a refine step, got trace: {[s.name for s in result.trace]}"
+    act_steps = [s for s in result.trace if s.name == "act"]
+    assert len(act_steps) == 2
+    assert act_steps[0].detail["max_possible_score"] > 0
+    assert act_steps[1].detail["max_possible_score"] > 0
     # Two reflect steps confirm the second (post-refine) reflection ran.
     reflect_steps = [s for s in result.trace if s.name == "reflect"]
     assert len(reflect_steps) == 2

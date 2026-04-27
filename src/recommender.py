@@ -2,6 +2,10 @@ from typing import List, Dict, Tuple, Optional
 from collections import Counter
 from dataclasses import dataclass
 
+from src.logging_setup import get_logger
+
+logger = get_logger(__name__)
+
 @dataclass
 class Song:
     """
@@ -104,7 +108,7 @@ def load_songs(csv_path: str) -> List[Dict]:
     """
     import csv
     songs = []
-    print(f"Loading songs from {csv_path}...")
+    logger.info("Loading songs from %s", csv_path)
 
     with open(csv_path, 'r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
@@ -124,7 +128,7 @@ def load_songs(csv_path: str) -> List[Dict]:
             }
             songs.append(song)
 
-    print(f"Loaded {len(songs)} songs.")
+    logger.info("Loaded %d songs.", len(songs))
     return songs
 
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:

@@ -4,7 +4,7 @@ Command line demo for MoodMatch Agent.
 Runs three end-to-end agent invocations covering:
   1. an auto-routed persona based on a free-text context
   2. an explicit persona override (discovery mode)
-  3. an edge-case profile that triggers the agent's reflect/refine step
+  3. a forced-refine audit case that visibly exercises the agent loop
 
 Run with:
     python -m src.main
@@ -32,7 +32,10 @@ def _print_trace(result: AgentResult) -> None:
             for hit in step.detail["retrieved_passages"]:
                 print(f"      RAG hit ({hit['score']}): {hit['title']}")
         elif step.name == "act":
+            iter_num = step.detail.get("iteration", 1)
+            print(f"      iteration: {iter_num}")
             print(f"      weights: {step.detail['weights']}")
+            print(f"      max possible score: {step.detail['max_possible_score']}")
             for title, score in step.detail["top"][:3]:
                 print(f"      -> {title} ({score})")
         elif step.name == "reflect":
@@ -108,10 +111,11 @@ def main() -> None:
         persona="discovery",
     )
 
-    # 3. Edge case that triggers the refine step
+    # 3. Force the refine step for demonstration/audit purposes.
+    strict_agent = MoodMatchAgent(songs=songs, confidence_threshold=0.99)
     run_demo(
-        agent,
-        label="Demo 3: Sad blues edge case (low data, agent self-corrects)",
+        strict_agent,
+        label="Demo 3: Forced refine audit case (strict threshold shows self-correction)",
         user_prefs={"genre": "blues", "mood": "sad", "energy": 0.3},
         persona="default",
     )

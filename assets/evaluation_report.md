@@ -1,12 +1,12 @@
 # MoodMatch Agent -- Evaluation Report
-_Generated 2026-04-27T06:55:34+00:00_
+_Generated 2026-04-27T07:12:54+00:00_
 
 ## Summary
 - cases run: **6**
 - cases fully passing: **6 / 6**
 - assertions passed: **20 / 20** (100.0%)
-- average confidence: **0.805** (high)
-- median confidence:  **0.798**
+- average confidence: **0.851** (high)
+- median confidence:  **0.861**
 - min confidence:     **0.701**
 - average iterations: **1.00** (max=2)
 
@@ -16,7 +16,7 @@ _Generated 2026-04-27T06:55:34+00:00_
 - user_prefs: `{"genre": "pop", "mood": "happy", "energy": 0.85, "valence": 0.85}`
 - persona requested: `default` -> selected `default`
 - iterations: 1
-- confidence: 0.824 (high)
+- confidence: 0.876 (high)
 - top recommendations:
   1. Sunrise City (Neon Echo) [pop/happy] score=4.95
   2. Gym Hero (Max Pulse) [pop/intense] score=3.84
@@ -43,7 +43,7 @@ _Generated 2026-04-27T06:55:34+00:00_
 - user_prefs: `{"genre": "edm", "mood": "energetic", "energy": 0.95, "likes_acoustic": false, "valence": 0.75}`
 - persona requested: `(auto)` -> selected `workout`
 - iterations: 1
-- confidence: 0.772 (high)
+- confidence: 0.814 (high)
 - top recommendations:
   1. Digital Dreams (Cyber Flux) [edm/energetic] score=4.33
   2. Latin Fire (Salsa Kings) [latin/energetic] score=3.40
@@ -57,7 +57,7 @@ _Generated 2026-04-27T06:55:34+00:00_
 - user_prefs: `{"genre": "pop", "mood": "happy", "energy": 0.8, "valence": 0.8}`
 - persona requested: `(auto)` -> selected `discovery`
 - iterations: 1
-- confidence: 0.749 (medium)
+- confidence: 0.846 (high)
 - top recommendations:
   1. Sunrise City (Neon Echo) [pop/happy] score=4.43
   2. Rooftop Lights (Indigo Parade) [indie pop/happy] score=3.73
@@ -70,7 +70,7 @@ _Generated 2026-04-27T06:55:34+00:00_
 - user_prefs: `{"genre": "blues", "mood": "sad", "energy": 0.3}`
 - persona requested: `default` -> selected `default`
 - iterations: 1
-- confidence: 0.829 (high)
+- confidence: 0.936 (high)
 - top recommendations:
   1. Rainy Day Blues (Delta Soul) [blues/sad] score=4.48
   2. Spacewalk Thoughts (Orbit Bloom) [ambient/chill] score=1.47
@@ -83,7 +83,7 @@ _Generated 2026-04-27T06:55:34+00:00_
 - user_prefs: `{"genre": "rock", "mood": "intense", "energy": 0.9, "likes_acoustic": false}`
 - persona requested: `comfort` -> selected `comfort`
 - iterations: 1
-- confidence: 0.953 (high)
+- confidence: 0.935 (high)
 - top recommendations:
   1. Storm Runner (Voltline) [rock/intense] score=6.19
   2. Gym Hero (Max Pulse) [pop/intense] score=3.16

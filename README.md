@@ -96,7 +96,7 @@ the Mermaid source lives in [`assets/architecture.mmd`](assets/architecture.mmd)
 | `src/guardrails.py` | Input validation; raises `GuardrailError` on bad prefs. |
 | `src/logging_setup.py` | Centralized logger writing to stderr and `logs/recommender.log`. |
 | `scripts/run_evaluation.py` | Test harness: 6 cases × multiple assertions, writes Markdown + JSON reports. |
-| `tests/` | 37 pytest cases across all modules. |
+| `tests/` | 38 pytest cases across all modules. |
 
 ---
 
@@ -146,7 +146,7 @@ python -m src.main
 ### Run the test suite
 ```bash
 pytest -q
-# expected: 37 passed
+# expected: 38 passed
 ```
 
 ### Run the evaluation harness
@@ -202,7 +202,7 @@ persona = "discovery"
 **Output (top 3 of 5)**
 ```
 Persona: discovery (Lower genre weight, surface adjacent genres.)
-Confidence: 0.750 (high)
+Confidence: 0.848 (high)
 
 1. Sunrise City (Neon Echo) [pop/happy] score=4.46
 2. Summer Vibes (Beach Party) [tropical house/happy] score=3.74
@@ -214,29 +214,39 @@ Confidence: 0.750 (high)
 **Why it matters:** the same user prefs would surface 4–5 pop tracks under
 the `comfort` persona; under `discovery` the genre weight drops to 0.7
 and valence rises to 0.9, surfacing tropical house, indie pop, and latin.
+Confidence is also normalized against the discovery persona's own
+best-case score (`4.5`), so the reliability signal is fair across
+personas instead of being anchored to the default weights.
 
-### 3. Sad blues edge case (low-data fallback)
+### 3. Forced refine audit case (strict threshold demo)
 
 **Input**
 ```python
 {"genre": "blues", "mood": "sad", "energy": 0.3}
 persona = "default"
+confidence_threshold = 0.99  # demo-only override to force the refine branch
 ```
 
 **Output (top 3 of 5)**
 ```
-Confidence: 0.829 (high)
+Confidence: 0.939 (high)
+Iterations: 2
 
-1. Rainy Day Blues -- Delta Soul [blues/sad] score=4.48
+1. Rainy Day Blues -- Delta Soul [blues/sad] score=4.69
 2. Spacewalk Thoughts -- Orbit Bloom [ambient/chill] score=1.47
 3. Library Rain -- Paper Lanterns [lofi/chill] score=1.42
-4. Classical Sunrise -- Vienna Strings [classical/peaceful] score=1.42
-5. Coffee Shop Stories -- Slow Stereo [jazz/relaxed] score=1.40
+
+Trace excerpt:
+- reflect #1 -> confidence 0.936 < threshold 0.99
+- refine -> mood weight 1.00 -> 1.20
+- act #2 / reflect #2 -> confidence 0.939
 ```
 
-**Why it matters:** there is only one blues song in the catalog. The agent
-correctly returns it as #1, then falls back to ambient / lofi / classical
-based on energy proximity rather than refusing or returning random tracks.
+**Why it matters:** on the default threshold this profile does **not**
+need refinement; the catalog's single blues song already matches very
+strongly. For the demo I raise the threshold to 0.99 so the repository
+shows the full Plan -> Act -> Reflect -> Refine -> Act -> Reflect loop
+in a deterministic, reproducible way.
 
 ---
 
@@ -255,6 +265,11 @@ based on energy proximity rather than refusing or returning random tracks.
   scalar to decide whether to refine, but the breakdown (top-score, gap,
   genre diversity, artist diversity) is preserved so its decisions are
   legible — not opaque.
+- **Persona-aware confidence normalization.** Confidence now normalizes
+  against the active persona weights and the fields present in the user
+  request, rather than always assuming the default persona's maximum
+  score. That keeps discovery/workout/study confidence comparable on
+  their own terms.
 - **Trace as the API.** Every recommendation comes with an `AgentTrace`,
   which is what makes the workflow auditable. The demo, the eval harness,
   and the unit tests all read from the same trace, so the system is
@@ -273,11 +288,11 @@ based on energy proximity rather than refusing or returning random tracks.
 ### Pytest suite
 ```
 $ pytest -q
-37 passed in 0.03s
+38 passed in 0.05s
 ```
 
 Coverage by module: retriever (5 tests), agent (10), personas (8),
-guardrails (8), confidence (4), original recommender (2).
+guardrails (8), confidence (5), original recommender (2).
 
 ### Evaluation harness
 ```
@@ -285,8 +300,8 @@ $ python -m scripts.run_evaluation
 - cases run: 6
 - cases fully passing: 6 / 6
 - assertions passed: 20 / 20 (100.0%)
-- average confidence: 0.805 (high)
-- median confidence:  0.798
+- average confidence: 0.851 (high)
+- median confidence:  0.861
 - min confidence:     0.701
 - average iterations: 1.00 (max=2)
 ```
@@ -299,8 +314,8 @@ selected persona, and the top recommendations — is written to
 ### Confidence-driven self-correction
 `tests/test_agent.py::test_refine_step_fires_when_confidence_below_threshold`
 constructs an agent with a near-impossible threshold (0.99) and verifies
-that the trace contains both a `refine` step and a second `reflect`
-step, and that `iterations == 2`. This proves the loop closes
+that the trace contains a `refine` step, a second `act`, and a second
+`reflect` step, and that `iterations == 2`. This proves the loop closes
 correctly even though the regular catalog rarely needs it.
 
 ### Guardrails
@@ -427,16 +442,18 @@ applied-ai-system-project/
     personas.py                 # specialization layer
     recommender.py              # original + weight-aware scoring
     retriever.py                # TF-IDF RAG
-  tests/                        # 37 pytest cases
+  tests/                        # 38 pytest cases
   README.md
   model_card.md                 # full reflection + ethics
   requirements.txt
 ```
 
 ## Submission checklist
-- [x] Code pushed to public repo
-- [x] Functional code, README.md, model_card.md, system architecture diagram
-- [x] Diagram in `/assets`
-- [x] Multiple meaningful commits
-- [x] README identifies base project, model_card answers reflection prompts
-- [ ] Loom walkthrough link added (see Reflection section)
+Before submitting, confirm:
+
+- [ ] Code is pushed to the correct public repo
+- [x] Functional code, `README.md`, `model_card.md`, and system architecture diagram are present
+- [x] Diagram and evaluation artifacts live in `assets/`
+- [ ] Commit history shows multiple meaningful commits
+- [x] README identifies the base project and `model_card.md` answers the reflection prompts
+- [ ] Loom walkthrough link has been added in the Reflection section

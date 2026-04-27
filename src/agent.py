@@ -135,13 +135,15 @@ class MoodMatchAgent:
 
         # -------- ACT --------
         ranked = self._score(user_prefs, weights, persona, k)
+        max_possible = self._max_possible_score(user_prefs, weights)
         trace.append(AgentStep("act", {
             "weights": dict(weights),
+            "max_possible_score": round(max_possible, 3),
             "top": [(s["title"], round(score, 3)) for s, score, _ in ranked],
         }))
 
         # -------- REFLECT --------
-        report = compute_confidence(ranked)
+        report = compute_confidence(ranked, max_possible=max_possible)
         trace.append(AgentStep("reflect", {
             "confidence": report.to_dict(),
             "label": confidence_label(report.overall),
@@ -166,7 +168,14 @@ class MoodMatchAgent:
             }))
             weights = adjusted
             ranked = self._score(user_prefs, weights, persona, k, artist_repeat_penalty=artist_penalty)
-            new_report = compute_confidence(ranked)
+            max_possible = self._max_possible_score(user_prefs, weights)
+            new_report = compute_confidence(ranked, max_possible=max_possible)
+            trace.append(AgentStep("act", {
+                "weights": dict(weights),
+                "max_possible_score": round(max_possible, 3),
+                "top": [(s["title"], round(score, 3)) for s, score, _ in ranked],
+                "iteration": 2,
+            }))
             trace.append(AgentStep("reflect", {
                 "confidence": new_report.to_dict(),
                 "label": confidence_label(new_report.overall),
@@ -236,6 +245,28 @@ class MoodMatchAgent:
             energy_floor_penalty=persona.energy_floor_penalty,
             artist_repeat_penalty=repeat_pen,
         )
+
+    @staticmethod
+    def _max_possible_score(user_prefs: Dict, weights: Dict[str, float]) -> float:
+        """
+        Compute a persona-aware best-case score for the current request.
+
+        Confidence should be normalized against the active weights and the
+        fields present in user_prefs, not against the default persona's
+        full feature set.
+        """
+        max_score = 0.0
+        if user_prefs.get("genre") is not None:
+            max_score += max(0.0, weights.get("genre", 2.0))
+        if user_prefs.get("mood") is not None:
+            max_score += max(0.0, weights.get("mood", 1.0))
+        if isinstance(user_prefs.get("energy"), (int, float)):
+            max_score += max(0.0, weights.get("energy", 1.5))
+        if isinstance(user_prefs.get("likes_acoustic"), bool):
+            max_score += max(0.0, weights.get("acoustic", 0.5))
+        if isinstance(user_prefs.get("valence"), (int, float)):
+            max_score += max(0.0, weights.get("valence", 0.5))
+        return max_score
 
     @staticmethod
     def _refine_weights(
