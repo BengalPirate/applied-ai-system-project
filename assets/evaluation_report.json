@@ -1,0 +1,529 @@
+{
+  "generated": "2026-04-27T06:55:34+00:00",
+  "cases": [
+    {
+      "case": "High-energy pop fan (default persona)",
+      "user_prefs": {
+        "genre": "pop",
+        "mood": "happy",
+        "energy": 0.85,
+        "valence": 0.85
+      },
+      "persona_requested": "default",
+      "persona_selected": "default",
+      "iterations": 1,
+      "confidence": {
+        "overall": 0.824,
+        "top_score_norm": 0.9,
+        "score_gap": 0.547,
+        "genre_diversity": 0.8,
+        "artist_diversity": 1.0,
+        "notes": []
+      },
+      "assertions": [
+        {
+          "name": "k>=5",
+          "passed": true,
+          "description": "Should return at least 5 recommendations."
+        },
+        {
+          "name": "top_genre==pop",
+          "passed": true,
+          "description": "Top recommendation should be in genre 'pop'."
+        },
+        {
+          "name": "confidence>=0.55",
+          "passed": true,
+          "description": "Overall confidence should be at least 0.55."
+        }
+      ],
+      "top_recommendations": [
+        {
+          "title": "Sunrise City",
+          "artist": "Neon Echo",
+          "genre": "pop",
+          "mood": "happy",
+          "energy": 0.82,
+          "score": 4.95,
+          "explanation": "Recommended because Genre match: pop (+2.00); Mood match: happy (+1.00); Energy similarity: +1.46 (target 0.85, song 0.82); Valence similarity: +0.49"
+        },
+        {
+          "title": "Gym Hero",
+          "artist": "Max Pulse",
+          "genre": "pop",
+          "mood": "intense",
+          "energy": 0.93,
+          "score": 3.84,
+          "explanation": "Recommended because Genre match: pop (+2.00); Energy similarity: +1.38 (target 0.85, song 0.93); Valence similarity: +0.46"
+        },
+        {
+          "title": "Summer Vibes",
+          "artist": "Beach Party",
+          "genre": "tropical house",
+          "mood": "happy",
+          "energy": 0.78,
+          "score": 2.88,
+          "explanation": "Recommended because Mood match: happy (+1.00); Energy similarity: +1.40 (target 0.85, song 0.78); Valence similarity: +0.48"
+        },
+        {
+          "title": "Rooftop Lights",
+          "artist": "Indigo Parade",
+          "genre": "indie pop",
+          "mood": "happy",
+          "energy": 0.76,
+          "score": 2.845,
+          "explanation": "Recommended because Mood match: happy (+1.00); Energy similarity: +1.36 (target 0.85, song 0.76); Valence similarity: +0.48"
+        },
+        {
+          "title": "Latin Fire",
+          "artist": "Salsa Kings",
+          "genre": "latin",
+          "mood": "energetic",
+          "energy": 0.81,
+          "score": 1.94,
+          "explanation": "Recommended because Energy similarity: +1.44 (target 0.85, song 0.81); Valence similarity: +0.50"
+        }
+      ]
+    },
+    {
+      "case": "Lofi study session (study persona auto-routes)",
+      "user_prefs": {
+        "genre": "lofi",
+        "mood": "chill",
+        "energy": 0.4,
+        "likes_acoustic": true
+      },
+      "persona_requested": null,
+      "persona_selected": "study",
+      "iterations": 1,
+      "confidence": {
+        "overall": 0.701,
+        "top_score_norm": 0.993,
+        "score_gap": 0.273,
+        "genre_diversity": 0.4,
+        "artist_diversity": 0.8,
+        "notes": []
+      },
+      "assertions": [
+        {
+          "name": "k>=5",
+          "passed": true,
+          "description": "Should return at least 5 recommendations."
+        },
+        {
+          "name": "persona==study",
+          "passed": true,
+          "description": "Routed persona should be 'study'."
+        },
+        {
+          "name": "top_genre==lofi",
+          "passed": true,
+          "description": "Top recommendation should be in genre 'lofi'."
+        },
+        {
+          "name": "confidence>=0.55",
+          "passed": true,
+          "description": "Overall confidence should be at least 0.55."
+        }
+      ],
+      "top_recommendations": [
+        {
+          "title": "Midnight Coding",
+          "artist": "LoRoom",
+          "genre": "lofi",
+          "mood": "chill",
+          "energy": 0.42,
+          "score": 5.46,
+          "explanation": "For deep focus: Genre match: lofi (+1.00); Mood match: chill (+1.50); Energy similarity: +1.96 (target 0.40, song 0.42); High acousticness match (+1.00)"
+        },
+        {
+          "title": "Library Rain",
+          "artist": "Paper Lanterns",
+          "genre": "lofi",
+          "mood": "chill",
+          "energy": 0.35,
+          "score": 5.4,
+          "explanation": "For deep focus: Genre match: lofi (+1.00); Mood match: chill (+1.50); Energy similarity: +1.90 (target 0.40, song 0.35); High acousticness match (+1.00)"
+        },
+        {
+          "title": "Spacewalk Thoughts",
+          "artist": "Orbit Bloom",
+          "genre": "ambient",
+          "mood": "chill",
+          "energy": 0.28,
+          "score": 4.26,
+          "explanation": "For deep focus: Mood match: chill (+1.50); Energy similarity: +1.76 (target 0.40, song 0.28); High acousticness match (+1.00)"
+        },
+        {
+          "title": "Focus Flow",
+          "artist": "LoRoom",
+          "genre": "lofi",
+          "mood": "focused",
+          "energy": 0.4,
+          "score": 4.0,
+          "explanation": "For deep focus: Genre match: lofi (+1.00); Energy similarity: +2.00 (target 0.40, song 0.40); High acousticness match (+1.00)"
+        },
+        {
+          "title": "Deep Focus",
+          "artist": "Study Beats",
+          "genre": "lofi",
+          "mood": "focused",
+          "energy": 0.38,
+          "score": 3.96,
+          "explanation": "For deep focus: Genre match: lofi (+1.00); Energy similarity: +1.96 (target 0.40, song 0.38); High acousticness match (+1.00)"
+        }
+      ]
+    },
+    {
+      "case": "Workout EDM (workout persona auto-routes, enforces energy floor)",
+      "user_prefs": {
+        "genre": "edm",
+        "mood": "energetic",
+        "energy": 0.95,
+        "likes_acoustic": false,
+        "valence": 0.75
+      },
+      "persona_requested": null,
+      "persona_selected": "workout",
+      "iterations": 1,
+      "confidence": {
+        "overall": 0.772,
+        "top_score_norm": 0.788,
+        "score_gap": 0.335,
+        "genre_diversity": 1.0,
+        "artist_diversity": 1.0,
+        "notes": []
+      },
+      "assertions": [
+        {
+          "name": "k>=5",
+          "passed": true,
+          "description": "Should return at least 5 recommendations."
+        },
+        {
+          "name": "persona==workout",
+          "passed": true,
+          "description": "Routed persona should be 'workout'."
+        },
+        {
+          "name": "all_energy>=0.7",
+          "passed": true,
+          "description": "Every recommendation should have energy >= 0.7."
+        },
+        {
+          "name": "confidence>=0.55",
+          "passed": true,
+          "description": "Overall confidence should be at least 0.55."
+        }
+      ],
+      "top_recommendations": [
+        {
+          "title": "Digital Dreams",
+          "artist": "Cyber Flux",
+          "genre": "edm",
+          "mood": "energetic",
+          "energy": 0.89,
+          "score": 4.335,
+          "explanation": "Workout pick: Genre match: edm (+1.20); Mood match: energetic (+0.80); Energy similarity: +2.35 (target 0.95, song 0.89); Low acousticness match (-0.50); Valence similarity: +0.48"
+        },
+        {
+          "title": "Latin Fire",
+          "artist": "Salsa Kings",
+          "genre": "latin",
+          "mood": "energetic",
+          "energy": 0.81,
+          "score": 3.4,
+          "explanation": "Workout pick: Mood match: energetic (+0.80); Energy similarity: +2.15 (target 0.95, song 0.81); Valence similarity: +0.45"
+        },
+        {
+          "title": "Bass Drop City",
+          "artist": "DJ Voltage",
+          "genre": "dubstep",
+          "mood": "energetic",
+          "energy": 0.94,
+          "score": 3.225,
+          "explanation": "Workout pick: Mood match: energetic (+0.80); Energy similarity: +2.48 (target 0.95, song 0.94); Low acousticness match (-0.50); Valence similarity: +0.45"
+        },
+        {
+          "title": "Summer Vibes",
+          "artist": "Beach Party",
+          "genre": "tropical house",
+          "mood": "happy",
+          "energy": 0.78,
+          "score": 2.51,
+          "explanation": "Workout pick: Energy similarity: +2.08 (target 0.95, song 0.78); Valence similarity: +0.43"
+        },
+        {
+          "title": "Rooftop Lights",
+          "artist": "Indigo Parade",
+          "genre": "indie pop",
+          "mood": "happy",
+          "energy": 0.76,
+          "score": 2.495,
+          "explanation": "Workout pick: Energy similarity: +2.03 (target 0.95, song 0.76); Valence similarity: +0.47"
+        }
+      ]
+    },
+    {
+      "case": "Discovery mode pop fan (broaden recommendations)",
+      "user_prefs": {
+        "genre": "pop",
+        "mood": "happy",
+        "energy": 0.8,
+        "valence": 0.8
+      },
+      "persona_requested": null,
+      "persona_selected": "discovery",
+      "iterations": 1,
+      "confidence": {
+        "overall": 0.749,
+        "top_score_norm": 0.806,
+        "score_gap": 0.381,
+        "genre_diversity": 0.8,
+        "artist_diversity": 1.0,
+        "notes": []
+      },
+      "assertions": [
+        {
+          "name": "k>=5",
+          "passed": true,
+          "description": "Should return at least 5 recommendations."
+        },
+        {
+          "name": "persona==discovery",
+          "passed": true,
+          "description": "Routed persona should be 'discovery'."
+        },
+        {
+          "name": "distinct_genres>=3",
+          "passed": true,
+          "description": "Top results should span at least 3 distinct genres."
+        }
+      ],
+      "top_recommendations": [
+        {
+          "title": "Sunrise City",
+          "artist": "Neon Echo",
+          "genre": "pop",
+          "mood": "happy",
+          "energy": 0.82,
+          "score": 4.434,
+          "explanation": "You might also enjoy Genre match: pop (+0.70); Mood match: happy (+1.40); Energy similarity: +1.47 (target 0.80, song 0.82); Valence similarity: +0.86"
+        },
+        {
+          "title": "Rooftop Lights",
+          "artist": "Indigo Parade",
+          "genre": "indie pop",
+          "mood": "happy",
+          "energy": 0.76,
+          "score": 3.731,
+          "explanation": "You might also enjoy Mood match: happy (+1.40); Energy similarity: +1.44 (target 0.80, song 0.76); Valence similarity: +0.89"
+        },
+        {
+          "title": "Summer Vibes",
+          "artist": "Beach Party",
+          "genre": "tropical house",
+          "mood": "happy",
+          "energy": 0.78,
+          "score": 3.698,
+          "explanation": "You might also enjoy Mood match: happy (+1.40); Energy similarity: +1.47 (target 0.80, song 0.78); Valence similarity: +0.83"
+        },
+        {
+          "title": "Gym Hero",
+          "artist": "Max Pulse",
+          "genre": "pop",
+          "mood": "intense",
+          "energy": 0.93,
+          "score": 2.878,
+          "explanation": "You might also enjoy Genre match: pop (+0.70); Energy similarity: +1.30 (target 0.80, song 0.93); Valence similarity: +0.87"
+        },
+        {
+          "title": "Latin Fire",
+          "artist": "Salsa Kings",
+          "genre": "latin",
+          "mood": "energetic",
+          "energy": 0.81,
+          "score": 2.34,
+          "explanation": "You might also enjoy Energy similarity: +1.48 (target 0.80, song 0.81); Valence similarity: +0.86"
+        }
+      ]
+    },
+    {
+      "case": "Niche blues sad mood (low-data fallback)",
+      "user_prefs": {
+        "genre": "blues",
+        "mood": "sad",
+        "energy": 0.3
+      },
+      "persona_requested": "default",
+      "persona_selected": "default",
+      "iterations": 1,
+      "confidence": {
+        "overall": 0.829,
+        "top_score_norm": 0.815,
+        "score_gap": 0.562,
+        "genre_diversity": 1.0,
+        "artist_diversity": 1.0,
+        "notes": []
+      },
+      "assertions": [
+        {
+          "name": "k>=5",
+          "passed": true,
+          "description": "Should return at least 5 recommendations."
+        },
+        {
+          "name": "top_genre==blues",
+          "passed": true,
+          "description": "Top recommendation should be in genre 'blues'."
+        },
+        {
+          "name": "distinct_genres>=3",
+          "passed": true,
+          "description": "Top results should span at least 3 distinct genres."
+        }
+      ],
+      "top_recommendations": [
+        {
+          "title": "Rainy Day Blues",
+          "artist": "Delta Soul",
+          "genre": "blues",
+          "mood": "sad",
+          "energy": 0.31,
+          "score": 4.485,
+          "explanation": "Recommended because Genre match: blues (+2.00); Mood match: sad (+1.00); Energy similarity: +1.48 (target 0.30, song 0.31)"
+        },
+        {
+          "title": "Spacewalk Thoughts",
+          "artist": "Orbit Bloom",
+          "genre": "ambient",
+          "mood": "chill",
+          "energy": 0.28,
+          "score": 1.47,
+          "explanation": "Recommended because Energy similarity: +1.47 (target 0.30, song 0.28)"
+        },
+        {
+          "title": "Library Rain",
+          "artist": "Paper Lanterns",
+          "genre": "lofi",
+          "mood": "chill",
+          "energy": 0.35,
+          "score": 1.425,
+          "explanation": "Recommended because Energy similarity: +1.42 (target 0.30, song 0.35)"
+        },
+        {
+          "title": "Classical Sunrise",
+          "artist": "Vienna Strings",
+          "genre": "classical",
+          "mood": "peaceful",
+          "energy": 0.25,
+          "score": 1.425,
+          "explanation": "Recommended because Energy similarity: +1.42 (target 0.30, song 0.25)"
+        },
+        {
+          "title": "Coffee Shop Stories",
+          "artist": "Slow Stereo",
+          "genre": "jazz",
+          "mood": "relaxed",
+          "energy": 0.37,
+          "score": 1.395,
+          "explanation": "Recommended because Energy similarity: +1.40 (target 0.30, song 0.37)"
+        }
+      ]
+    },
+    {
+      "case": "Comfort persona for rock fan (narrow on rock)",
+      "user_prefs": {
+        "genre": "rock",
+        "mood": "intense",
+        "energy": 0.9,
+        "likes_acoustic": false
+      },
+      "persona_requested": "comfort",
+      "persona_selected": "comfort",
+      "iterations": 1,
+      "confidence": {
+        "overall": 0.953,
+        "top_score_norm": 1.0,
+        "score_gap": 0.766,
+        "genre_diversity": 1.0,
+        "artist_diversity": 1.0,
+        "notes": []
+      },
+      "assertions": [
+        {
+          "name": "k>=5",
+          "passed": true,
+          "description": "Should return at least 5 recommendations."
+        },
+        {
+          "name": "top_genre==rock",
+          "passed": true,
+          "description": "Top recommendation should be in genre 'rock'."
+        },
+        {
+          "name": "confidence>=0.55",
+          "passed": true,
+          "description": "Overall confidence should be at least 0.55."
+        }
+      ],
+      "top_recommendations": [
+        {
+          "title": "Storm Runner",
+          "artist": "Voltline",
+          "genre": "rock",
+          "mood": "intense",
+          "energy": 0.91,
+          "score": 6.185,
+          "explanation": "Sticking with what you love: Genre match: rock (+3.00); Mood match: intense (+1.20); Energy similarity: +1.48 (target 0.90, song 0.91); Low acousticness match (+0.50)"
+        },
+        {
+          "title": "Gym Hero",
+          "artist": "Max Pulse",
+          "genre": "pop",
+          "mood": "intense",
+          "energy": 0.93,
+          "score": 3.155,
+          "explanation": "Sticking with what you love: Mood match: intense (+1.20); Energy similarity: +1.46 (target 0.90, song 0.93); Low acousticness match (+0.50)"
+        },
+        {
+          "title": "Thunderstruck Anthem",
+          "artist": "Iron Thunder",
+          "genre": "metal",
+          "mood": "intense",
+          "energy": 0.96,
+          "score": 3.11,
+          "explanation": "Sticking with what you love: Mood match: intense (+1.20); Energy similarity: +1.41 (target 0.90, song 0.96); Low acousticness match (+0.50)"
+        },
+        {
+          "title": "Digital Dreams",
+          "artist": "Cyber Flux",
+          "genre": "edm",
+          "mood": "energetic",
+          "energy": 0.89,
+          "score": 1.985,
+          "explanation": "Sticking with what you love: Energy similarity: +1.48 (target 0.90, song 0.89); Low acousticness match (+0.50)"
+        },
+        {
+          "title": "Punk Revolution",
+          "artist": "Riot Youth",
+          "genre": "punk",
+          "mood": "rebellious",
+          "energy": 0.88,
+          "score": 1.97,
+          "explanation": "Sticking with what you love: Energy similarity: +1.47 (target 0.90, song 0.88); Low acousticness match (+0.50)"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "cases": 6,
+    "fully_passing_cases": 6,
+    "assertions_passed": 20,
+    "assertions_total": 20,
+    "average_confidence": 0.8046666666666666,
+    "median_confidence": 0.798,
+    "min_confidence": 0.701,
+    "average_iterations": 1
+  }
+}

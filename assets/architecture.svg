@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 720" font-family="Helvetica,Arial,sans-serif" font-size="13">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <style>
+      .box { fill:#f8fafc; stroke:#334155; stroke-width:1.5; rx:8; ry:8; }
+      .data { fill:#fef3c7; stroke:#a16207; stroke-width:1.5; rx:14; ry:14; }
+      .agent { fill:#dbeafe; stroke:#1d4ed8; stroke-width:1.5; rx:8; ry:8; }
+      .decision { fill:#fce7f3; stroke:#be185d; stroke-width:1.5; }
+      .observe { fill:#dcfce7; stroke:#15803d; stroke-width:1.5; rx:8; ry:8; }
+      .label { fill:#0f172a; }
+      .small { font-size:11px; fill:#475569; }
+      .arrow { stroke:#444; stroke-width:1.6; fill:none; }
+      .dashed { stroke:#888; stroke-width:1.4; fill:none; stroke-dasharray:5 4; }
+      .title { font-size:18px; font-weight:bold; fill:#0f172a; }
+      .section { font-size:12px; font-weight:bold; fill:#1e293b; }
+    </style>
+  </defs>
+
+  <text x="20" y="32" class="title">MoodMatch Agent -- Applied AI System Architecture</text>
+  <text x="20" y="52" class="small">Plan -> Act -> Reflect -> Refine loop with RAG context, persona specialization, and confidence-driven self-correction</text>
+
+  <!-- Input -->
+  <rect x="20" y="80" width="220" height="80" class="box"/>
+  <text x="30" y="102" class="section">User Input</text>
+  <text x="30" y="122" class="label">genre, mood, energy</text>
+  <text x="30" y="138" class="label">likes_acoustic, valence</text>
+  <text x="30" y="154" class="label">free-text context</text>
+
+  <!-- Guardrails -->
+  <rect x="20" y="180" width="220" height="60" class="box"/>
+  <text x="30" y="202" class="section">Guardrails</text>
+  <text x="30" y="222" class="label">range checks, mood whitelist</text>
+
+  <!-- Persona Router -->
+  <rect x="20" y="260" width="220" height="80" class="box"/>
+  <text x="30" y="282" class="section">Persona Router (few-shot)</text>
+  <text x="30" y="302" class="label">default / discovery / comfort</text>
+  <text x="30" y="318" class="label">workout / study</text>
+
+  <!-- RAG -->
+  <rect x="20" y="370" width="220" height="80" class="box"/>
+  <text x="30" y="392" class="section">RAG Retriever (TF-IDF)</text>
+  <text x="30" y="412" class="label">tokenize -> idf -> cosine</text>
+  <text x="30" y="428" class="label">top-3 passages per query</text>
+
+  <rect x="20" y="470" width="220" height="50" class="data"/>
+  <text x="30" y="490" class="section">data/knowledge_base.md</text>
+  <text x="30" y="508" class="small">11 curated passages (genre lore, fallbacks)</text>
+
+  <rect x="20" y="540" width="220" height="50" class="data"/>
+  <text x="30" y="560" class="section">data/songs.csv</text>
+  <text x="30" y="578" class="small">25 songs across 18 genres</text>
+
+  <!-- Agent loop -->
+  <rect x="290" y="80" width="600" height="510" class="box" fill="#eff6ff" stroke="#1d4ed8"/>
+  <text x="305" y="102" class="section">MoodMatch Agent (src/agent.py)</text>
+
+  <!-- PLAN -->
+  <rect x="320" y="120" width="240" height="90" class="agent"/>
+  <text x="330" y="142" class="section">1. PLAN</text>
+  <text x="330" y="162" class="label">choose persona weights</text>
+  <text x="330" y="178" class="label">retrieve KB context</text>
+  <text x="330" y="194" class="label">build initial weights dict</text>
+
+  <!-- ACT -->
+  <rect x="620" y="120" width="240" height="90" class="agent"/>
+  <text x="630" y="142" class="section">2. ACT</text>
+  <text x="630" y="162" class="label">score_song_with_weights()</text>
+  <text x="630" y="178" class="label">sort by score</text>
+  <text x="630" y="194" class="label">return top-K</text>
+
+  <!-- REFLECT -->
+  <rect x="620" y="240" width="240" height="100" class="agent"/>
+  <text x="630" y="262" class="section">3. REFLECT</text>
+  <text x="630" y="282" class="label">compute_confidence:</text>
+  <text x="630" y="298" class="label">top_score, gap,</text>
+  <text x="630" y="314" class="label">genre &amp; artist diversity</text>
+  <text x="630" y="330" class="small">(notes: filter-bubble risk, etc.)</text>
+
+  <!-- Decision -->
+  <polygon points="740,370 860,410 740,450 620,410" class="decision"/>
+  <text x="678" y="408" class="section">confidence</text>
+  <text x="678" y="424" class="section">&lt; threshold?</text>
+
+  <!-- REFINE -->
+  <rect x="320" y="380" width="240" height="120" class="agent"/>
+  <text x="330" y="402" class="section">4. REFINE (conditional)</text>
+  <text x="330" y="422" class="label">- lower genre weight if</text>
+  <text x="330" y="438" class="label">  diversity is low</text>
+  <text x="330" y="454" class="label">- raise valence/mood if</text>
+  <text x="330" y="470" class="label">  top score is weak</text>
+  <text x="330" y="486" class="label">- artist repeat penalty</text>
+
+  <!-- FINALIZE -->
+  <rect x="620" y="500" width="240" height="80" class="agent"/>
+  <text x="630" y="522" class="section">5. FINALIZE</text>
+  <text x="630" y="542" class="label">apply persona tone prefix</text>
+  <text x="630" y="558" class="label">build AgentTrace</text>
+
+  <!-- Output -->
+  <rect x="940" y="120" width="220" height="170" class="observe"/>
+  <text x="950" y="142" class="section">AgentResult</text>
+  <text x="950" y="164" class="label">- top-K Recommendation list</text>
+  <text x="950" y="180" class="label">- ConfidenceReport</text>
+  <text x="950" y="196" class="label">- confidence_label</text>
+  <text x="950" y="212" class="label">- iterations</text>
+  <text x="950" y="228" class="label">- AgentTrace[]</text>
+  <text x="950" y="248" class="small">(plan, act, reflect, refine,</text>
+  <text x="950" y="264" class="small">finalize -- all observable)</text>
+
+  <!-- Eval harness -->
+  <rect x="940" y="320" width="220" height="100" class="observe"/>
+  <text x="950" y="342" class="section">Evaluation Harness</text>
+  <text x="950" y="362" class="label">scripts/run_evaluation.py</text>
+  <text x="950" y="378" class="label">6 cases, 20 assertions</text>
+  <text x="950" y="394" class="label">writes assets/evaluation_</text>
+  <text x="950" y="410" class="label">report.md + .json</text>
+
+  <!-- Tests -->
+  <rect x="940" y="450" width="220" height="80" class="observe"/>
+  <text x="950" y="472" class="section">Pytest Suite</text>
+  <text x="950" y="492" class="label">37 tests covering all</text>
+  <text x="950" y="508" class="label">modules + integration</text>
+
+  <!-- Logs -->
+  <rect x="940" y="560" width="220" height="50" class="data"/>
+  <text x="950" y="580" class="section">logs/recommender.log</text>
+  <text x="950" y="598" class="small">rotating, every step traced</text>
+
+  <!-- Arrows: input pipeline -->
+  <path class="arrow" d="M130 160 L130 180" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M130 240 L130 260" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M130 340 L130 370" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M130 450 L130 470" marker-end="url(#arrow)"/>
+
+  <!-- Persona feeds plan -->
+  <path class="arrow" d="M240 300 L320 165" marker-end="url(#arrow)"/>
+  <text x="250" y="225" class="small">persona</text>
+
+  <!-- RAG feeds plan -->
+  <path class="arrow" d="M240 405 L320 195" marker-end="url(#arrow)"/>
+  <text x="250" y="345" class="small">retrieved passages</text>
+
+  <!-- Catalog feeds Act -->
+  <path class="arrow" d="M240 555 L640 220" marker-end="url(#arrow)"/>
+  <text x="430" y="430" class="small">songs catalog</text>
+
+  <!-- Plan to Act -->
+  <path class="arrow" d="M560 165 L620 165" marker-end="url(#arrow)"/>
+
+  <!-- Act to Reflect -->
+  <path class="arrow" d="M740 210 L740 240" marker-end="url(#arrow)"/>
+
+  <!-- Reflect to Decision -->
+  <path class="arrow" d="M740 340 L740 370" marker-end="url(#arrow)"/>
+
+  <!-- yes branch (decision -> refine) -->
+  <path class="arrow" d="M620 410 L560 440" marker-end="url(#arrow)"/>
+  <text x="565" y="408" class="small">yes</text>
+
+  <!-- Refine -> Act (re-score) -->
+  <path class="arrow" d="M440 380 L440 250 L620 165" marker-end="url(#arrow)"/>
+  <text x="450" y="270" class="small">re-score</text>
+
+  <!-- no branch (decision -> finalize) -->
+  <path class="arrow" d="M740 450 L740 500" marker-end="url(#arrow)"/>
+  <text x="745" y="478" class="small">no</text>
+
+  <!-- Finalize -> Output -->
+  <path class="arrow" d="M860 540 L940 220" marker-end="url(#arrow)"/>
+
+  <!-- Eval validates Plan/Act -->
+  <path class="dashed" d="M940 380 L880 230" marker-end="url(#arrow)"/>
+  <text x="880" y="320" class="small">runs full agent</text>
+
+  <!-- Logs -->
+  <path class="dashed" d="M860 165 L940 580" marker-end="url(#arrow)"/>
+  <text x="900" y="380" class="small">log every step</text>
+
+  <!-- Legend -->
+  <text x="20" y="660" class="section">Legend:</text>
+  <rect x="80" y="650" width="22" height="14" class="data"/><text x="108" y="662" class="small">data source</text>
+  <rect x="200" y="650" width="22" height="14" class="agent"/><text x="228" y="662" class="small">agent step</text>
+  <polygon points="320,650 332,657 320,664 308,657" class="decision"/><text x="345" y="662" class="small">decision</text>
+  <rect x="420" y="650" width="22" height="14" class="observe"/><text x="448" y="662" class="small">observable output / test</text>
+
+  <text x="20" y="694" class="small">Required AI feature: agentic workflow.  Stretch features included: RAG, persona specialization (few-shot), test harness.</text>
+</svg>

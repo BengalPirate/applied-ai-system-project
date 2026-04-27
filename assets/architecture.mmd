@@ -1,0 +1,39 @@
+flowchart LR
+    %% MoodMatch Agent system architecture
+    UserPrefs["User input<br/>(genre, mood, energy,<br/>likes_acoustic, free-text context)"]
+    Guardrails["Guardrails<br/>(validate ranges,<br/>flag unknown moods)"]
+    PersonaRouter["Persona Router<br/>(few-shot keyword match:<br/>default / discovery / comfort /<br/>workout / study)"]
+    Retriever["RAG Retriever<br/>(TF-IDF over<br/>knowledge_base.md)"]
+    KB[("data/knowledge_base.md<br/>(11 curated passages)")]
+
+    Catalog[("data/songs.csv<br/>(25 songs)")]
+
+    Plan["PLAN<br/>persona + retrieved context<br/>-> starting weights"]
+    Act["ACT<br/>score every song with<br/>persona-aware weights"]
+    Reflect["REFLECT<br/>compute confidence:<br/>top_score, gap,<br/>genre_div, artist_div"]
+    Refine{"confidence<br/>< threshold?"}
+    Refine2["REFINE<br/>adjust weights<br/>(filter-bubble fix,<br/>artist penalty,<br/>boost mood/valence)"]
+    Finalize["FINALIZE<br/>top-K with persona-toned<br/>explanations"]
+
+    Eval["Evaluation Harness<br/>scripts/run_evaluation.py<br/>(6 cases, 20 assertions)"]
+    Tests["Pytest<br/>(37 tests across<br/>retriever, agent,<br/>personas, guardrails,<br/>confidence)"]
+    Logs["logs/recommender.log<br/>(rotating, full trace)"]
+
+    UserPrefs --> Guardrails --> PersonaRouter
+    PersonaRouter --> Plan
+    Retriever --> Plan
+    KB --> Retriever
+    Plan --> Act
+    Catalog --> Act
+    Act --> Reflect
+    Reflect --> Refine
+    Refine -- yes --> Refine2 --> Act
+    Refine -- no --> Finalize
+    Finalize --> User2["Top-5 recommendations<br/>+ confidence label<br/>+ observable AgentTrace"]
+
+    Eval -. validates .-> Plan
+    Tests -. covers .-> Plan
+    Plan -. log .-> Logs
+    Act -. log .-> Logs
+    Reflect -. log .-> Logs
+    Refine2 -. log .-> Logs
