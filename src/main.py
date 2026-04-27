@@ -1,79 +1,119 @@
 """
-Command line runner for the Music Recommender Simulation.
+Command line demo for MoodMatch Agent.
 
-This file helps you quickly run and test your recommender.
+Runs three end-to-end agent invocations covering:
+  1. an auto-routed persona based on a free-text context
+  2. an explicit persona override (discovery mode)
+  3. an edge-case profile that triggers the agent's reflect/refine step
 
-You will implement the functions in recommender.py:
-- load_songs
-- score_song
-- recommend_songs
+Run with:
+    python -m src.main
 """
 
-from src.recommender import load_songs, recommend_songs
+from __future__ import annotations
+
+import json
+from typing import Dict, Optional
+
+from src.agent import AgentResult, MoodMatchAgent
+from src.recommender import load_songs
 
 
-def print_recommendations(profile_name: str, user_prefs: dict, songs: list, k: int = 5) -> None:
-    """Helper function to print recommendations for a user profile."""
-    print(f"\n{'='*70}")
-    print(f"Profile: {profile_name}")
-    print(f"Preferences: {user_prefs}")
-    print(f"{'='*70}\n")
+SEPARATOR = "=" * 78
 
-    recommendations = recommend_songs(user_prefs, songs, k=k)
 
-    print(f"Top {k} recommendations:\n")
-    for i, rec in enumerate(recommendations, 1):
-        song, score, explanation = rec
-        print(f"{i}. {song['title']} by {song['artist']}")
-        print(f"   Genre: {song['genre']} | Mood: {song['mood']} | Energy: {song['energy']:.2f}")
-        print(f"   Score: {score:.2f}")
-        print(f"   Because: {explanation}")
-        print()
+def _print_trace(result: AgentResult) -> None:
+    print("Trace:")
+    for i, step in enumerate(result.trace, 1):
+        print(f"  [{i}] {step.name}")
+        if step.name == "plan":
+            print(f"      persona: {step.detail['persona']} -- {step.detail['persona_description']}")
+            print(f"      starting weights: {step.detail['starting_weights']}")
+            for hit in step.detail["retrieved_passages"]:
+                print(f"      RAG hit ({hit['score']}): {hit['title']}")
+        elif step.name == "act":
+            print(f"      weights: {step.detail['weights']}")
+            for title, score in step.detail["top"][:3]:
+                print(f"      -> {title} ({score})")
+        elif step.name == "reflect":
+            c = step.detail["confidence"]
+            print(
+                f"      confidence={c['overall']} ({step.detail['label']}) "
+                f"top_score_norm={c['top_score_norm']} genre_div={c['genre_diversity']} "
+                f"artist_div={c['artist_diversity']}"
+            )
+            for note in c["notes"]:
+                print(f"      note: {note}")
+        elif step.name == "refine":
+            print(f"      old: {step.detail['old_weights']}")
+            print(f"      new: {step.detail['new_weights']}")
+            for r in step.detail["rationale"]:
+                print(f"      reason: {r}")
+        elif step.name == "finalize":
+            print(f"      iterations={step.detail['iterations']}")
+
+
+def _print_result(label: str, result: AgentResult) -> None:
+    print(f"\n{SEPARATOR}\n{label}\n{SEPARATOR}")
+    print(f"User preferences: {json.dumps(result.user_prefs)}")
+    print(f"Persona: {result.persona.name} ({result.persona.description})")
+    if result.warnings:
+        print(f"Guardrail warnings: {result.warnings}")
+    print(f"Confidence: {result.confidence.overall:.3f} ({result.confidence_label})")
+    if result.confidence.notes:
+        for n in result.confidence.notes:
+            print(f"  note: {n}")
+    print(f"Iterations: {result.iterations}")
+    print("\nTop recommendations:")
+    for i, rec in enumerate(result.recommendations, 1):
+        print(
+            f"  {i}. {rec.song['title']} -- {rec.song.get('artist','?')} "
+            f"[{rec.song.get('genre','?')}/{rec.song.get('mood','?')} "
+            f"energy={rec.song.get('energy',0):.2f}] score={rec.score:.2f}"
+        )
+        print(f"     {rec.explanation}")
+    print()
+    _print_trace(result)
+
+
+def run_demo(
+    agent: MoodMatchAgent,
+    label: str,
+    user_prefs: Dict,
+    persona: Optional[str] = None,
+    context_text: Optional[str] = None,
+) -> AgentResult:
+    result = agent.run(user_prefs=user_prefs, persona_name=persona, context_text=context_text)
+    _print_result(label, result)
+    return result
 
 
 def main() -> None:
     songs = load_songs("data/songs.csv")
+    agent = MoodMatchAgent(songs=songs)
 
-    # Test Profile 1: High-Energy Pop Fan
-    print_recommendations(
-        "High-Energy Pop Fan",
-        {"genre": "pop", "mood": "happy", "energy": 0.8},
-        songs
+    # 1. Auto-routed persona via free-text context
+    run_demo(
+        agent,
+        label="Demo 1: Lofi study session (auto-routed persona)",
+        user_prefs={"genre": "lofi", "mood": "chill", "energy": 0.4, "likes_acoustic": True},
+        context_text="I need quiet music for a long library study session",
     )
 
-    # Test Profile 2: Chill Lofi Listener
-    print_recommendations(
-        "Chill Lofi Study Session",
-        {"genre": "lofi", "mood": "chill", "energy": 0.4, "likes_acoustic": True},
-        songs
+    # 2. Explicit persona override (discovery mode)
+    run_demo(
+        agent,
+        label="Demo 2: Pop fan in Discovery mode (cross-genre exploration)",
+        user_prefs={"genre": "pop", "mood": "happy", "energy": 0.8, "valence": 0.85},
+        persona="discovery",
     )
 
-    # Test Profile 3: Intense Rock Enthusiast
-    print_recommendations(
-        "Intense Rock Enthusiast",
-        {"genre": "rock", "mood": "intense", "energy": 0.9, "likes_acoustic": False},
-        songs
-    )
-
-    # Test Profile 4: Relaxed Acoustic Vibes
-    print_recommendations(
-        "Relaxed Acoustic Vibes",
-        {"genre": "jazz", "mood": "relaxed", "energy": 0.35, "likes_acoustic": True},
-        songs
-    )
-
-    # Test Profile 5: Energetic EDM Party Mode
-    print_recommendations(
-        "Energetic EDM Party Mode",
-        {"genre": "edm", "mood": "energetic", "energy": 0.95, "likes_acoustic": False, "valence": 0.75},
-        songs
-    )
-
-    # Test Profile 6: Sad Blues Listener (edge case - conflicting energy/mood)
-    print_recommendations(
-        "Melancholic Blues (Edge Case)",
-        {"genre": "blues", "mood": "sad", "energy": 0.3},
-        songs
+    # 3. Edge case that triggers the refine step
+    run_demo(
+        agent,
+        label="Demo 3: Sad blues edge case (low data, agent self-corrects)",
+        user_prefs={"genre": "blues", "mood": "sad", "energy": 0.3},
+        persona="default",
     )
 
 
