@@ -1,4 +1,5 @@
 from typing import List, Dict, Tuple, Optional
+from collections import Counter
 from dataclasses import dataclass
 
 @dataclass
@@ -187,3 +188,113 @@ def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tup
     # Sort by score (highest first) and return top k
     sorted_songs = sorted(scored_songs, key=lambda x: x[1], reverse=True)
     return sorted_songs[:k]
+
+
+def score_song_with_weights(
+    user_prefs: Dict,
+    song: Dict,
+    weights: Dict[str, float],
+    energy_floor: Optional[float] = None,
+    energy_floor_penalty: float = 0.0,
+) -> Tuple[float, List[str]]:
+    """
+    Persona-aware scoring. Same shape as score_song, but every weight is
+    a parameter so the agent can re-score with adjusted weights during
+    its reflect/refine step.
+    """
+    score = 0.0
+    reasons: List[str] = []
+
+    w_genre = weights.get("genre", 2.0)
+    w_mood = weights.get("mood", 1.0)
+    w_energy = weights.get("energy", 1.5)
+    w_acoustic = weights.get("acoustic", 0.5)
+    w_valence = weights.get("valence", 0.5)
+
+    if song.get("genre") == user_prefs.get("genre") and w_genre != 0:
+        score += w_genre
+        reasons.append(f"Genre match: {song['genre']} ({w_genre:+.2f})")
+
+    if song.get("mood") == user_prefs.get("mood") and w_mood != 0:
+        score += w_mood
+        reasons.append(f"Mood match: {song['mood']} ({w_mood:+.2f})")
+
+    if "energy" in user_prefs and "energy" in song and w_energy != 0:
+        energy_diff = abs(song["energy"] - user_prefs["energy"])
+        energy_score = max(0.0, w_energy * (1 - energy_diff))
+        score += energy_score
+        reasons.append(
+            f"Energy similarity: {energy_score:+.2f} "
+            f"(target {user_prefs['energy']:.2f}, song {song['energy']:.2f})"
+        )
+
+    if "likes_acoustic" in user_prefs and w_acoustic != 0:
+        ac = song.get("acousticness", 0.5)
+        if user_prefs["likes_acoustic"] and ac > 0.6:
+            score += w_acoustic
+            reasons.append(f"High acousticness match ({w_acoustic:+.2f})")
+        elif (not user_prefs["likes_acoustic"]) and ac < 0.3:
+            score += w_acoustic
+            reasons.append(f"Low acousticness match ({w_acoustic:+.2f})")
+
+    if "valence" in user_prefs and "valence" in song and w_valence != 0:
+        valence_diff = abs(song["valence"] - user_prefs["valence"])
+        valence_score = max(0.0, w_valence * (1 - valence_diff))
+        if valence_score > 0.3 * abs(w_valence):
+            score += valence_score
+            reasons.append(f"Valence similarity: {valence_score:+.2f}")
+        else:
+            score += valence_score
+
+    if energy_floor is not None and song.get("energy", 0.0) < energy_floor and energy_floor_penalty > 0:
+        score -= energy_floor_penalty
+        reasons.append(
+            f"Energy floor penalty: -{energy_floor_penalty:.2f} "
+            f"(below {energy_floor:.2f})"
+        )
+
+    return score, reasons
+
+
+def recommend_with_weights(
+    user_prefs: Dict,
+    songs: List[Dict],
+    weights: Dict[str, float],
+    k: int = 5,
+    energy_floor: Optional[float] = None,
+    energy_floor_penalty: float = 0.0,
+    artist_repeat_penalty: float = 0.0,
+) -> List[Tuple[Dict, float, str]]:
+    """
+    Score every song with the given weights, optionally apply an artist
+    repeat penalty after sorting, and return top-k.
+    """
+    scored: List[Tuple[Dict, float, List[str]]] = []
+    for song in songs:
+        s, reasons = score_song_with_weights(
+            user_prefs, song, weights,
+            energy_floor=energy_floor,
+            energy_floor_penalty=energy_floor_penalty,
+        )
+        scored.append((song, s, reasons))
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    if artist_repeat_penalty > 0:
+        seen: Counter = Counter()
+        adjusted: List[Tuple[Dict, float, List[str]]] = []
+        for song, s, reasons in scored:
+            artist = song.get("artist", "?")
+            repeats = seen[artist]
+            if repeats > 0:
+                penalty = artist_repeat_penalty * repeats
+                s -= penalty
+                reasons = reasons + [f"Artist repeat penalty: -{penalty:.2f}"]
+            seen[artist] += 1
+            adjusted.append((song, s, reasons))
+        adjusted.sort(key=lambda x: x[1], reverse=True)
+        scored = adjusted
+
+    return [
+        (song, s, "; ".join(reasons) if reasons else "No matching features")
+        for song, s, reasons in scored[:k]
+    ]
