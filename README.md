@@ -409,11 +409,15 @@ confidence behaviour need to be derived from the confidence formula, not
 from intuition about the data.
 
 ### Loom walkthrough
-A 5–7 minute Loom walkthrough demonstrating end-to-end usage,
-persona routing, confidence behaviour, and the evaluation harness will
-be linked here once recorded:
 
-> **Loom video:** _link to be added before submission._
+**Loom video:** https://www.loom.com/share/1d79cc5b9b194106a48aeaa51b582b6d
+
+The walkthrough demonstrates the system running end-to-end (3 inputs in
+the Streamlit UI), the agent loop's observable trace including a
+self-correction (refine) iteration, the RAG passages retrieved during
+the plan step, persona specialization changing recommendations for the
+same prefs, and the evaluation harness reporting 6 / 6 cases and
+20 / 20 assertions passing.
 
 ---
 
@@ -456,4 +460,4 @@ Before submitting, confirm:
 - [x] Diagram and evaluation artifacts live in `assets/`
 - [ ] Commit history shows multiple meaningful commits
 - [x] README identifies the base project and `model_card.md` answers the reflection prompts
-- [ ] Loom walkthrough link has been added in the Reflection section
+- [x] Loom walkthrough link has been added in the Reflection section
