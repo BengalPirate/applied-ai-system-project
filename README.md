@@ -1,268 +1,442 @@
-# 🎵 Music Recommender Simulation
+# MoodMatch Agent: An Applied AI System
 
-## Project Summary
+> **Final Project — Module 6 (Show What You Know).**
+> Extends my Module 3 Music Recommender Simulation into a full agentic AI
+> system with Retrieval-Augmented Generation, persona specialization, a
+> reflect/refine loop, and an evaluation harness.
 
-**MoodMatch Recommender v1.0** is a content-based music recommendation system that suggests songs based on user taste profiles. This educational simulation demonstrates how platforms like Spotify and TikTok transform user preferences into personalized recommendations.
+## Base project (Modules 1–3)
 
-### What This System Does
+This project is built on top of my Module 3 starter,
+**MoodMatch Recommender v1.0** ([original repo](https://github.com/BengalPirate/ai110-module3show-musicrecommendersimulation-starter)).
+The original was a content-based music recommender that scored 25 songs
+against a user's stated genre / mood / energy / acousticness preferences
+using a fixed weighted formula and returned the top-5 with transparent
+"because" explanations. It was a single-pass, single-mode pipeline —
+no retrieval, no agency, no test harness.
 
-This recommender:
-- **Analyzes 25 songs** across diverse genres (pop, lofi, rock, jazz, EDM, metal, blues, classical, and more)
-- **Scores each song** using a weighted algorithm that considers genre match (+2.0 pts), mood match (+1.0 pt), energy similarity (up to +1.5 pts), acousticness preference (+0.5 pts), and valence similarity (up to +0.5 pts)
-- **Ranks songs** from highest to lowest score and returns the top 5 recommendations
-- **Explains why** each song was recommended with transparent scoring breakdowns
-
-### Key Learning Outcomes
-
-Through building and testing this system, I explored:
-- How **content-based filtering** works vs. collaborative filtering
-- How **data imbalance** creates bias even when algorithms are mathematically fair
-- How **weighted scoring** can create "filter bubbles" that limit musical discovery
-- Why **transparency** matters in AI systems that influence what culture we consume
-
----
-
-## How The System Works
-
-This music recommender simulates how platforms like Spotify and TikTok predict what users will enjoy next. Real-world recommendation systems typically use two main approaches:
-
-1. **Collaborative Filtering**: Uses behavior from other users (e.g., "people who liked Song A also liked Song B")
-2. **Content-Based Filtering**: Uses song attributes like genre, mood, energy, and tempo to match user preferences
-
-Our simulation uses a **content-based approach** with the following design:
-
-### Song Features
-Each song in our catalog includes:
-- **Categorical**: genre, mood, artist, title
-- **Numerical**: energy (0.0-1.0), tempo_bpm, valence (happiness), danceability, acousticness
-
-### User Profile
-The user profile captures taste preferences:
-- `favorite_genre`: preferred music genre (e.g., "pop", "rock", "lofi")
-- `favorite_mood`: desired emotional vibe (e.g., "happy", "chill", "intense")
-- `target_energy`: energy level preference (0.0-1.0 scale)
-- `likes_acoustic`: preference for acoustic vs. electronic sounds
-
-### Scoring Algorithm ("Algorithm Recipe")
-The recommender scores each song using a weighted point system:
-- **+2.0 points** for exact genre match
-- **+1.0 point** for exact mood match
-- **Similarity score** based on energy proximity (closer = higher score)
-- **Bonus/penalty** based on acousticness preference
-
-### Ranking Process
-1. Load all songs from the catalog (CSV file)
-2. For each song, calculate a score using the user's profile
-3. Sort songs by score (highest to lowest)
-4. Return the top K recommendations with explanations
+This final project keeps the original scoring logic intact (and reuses
+its tests) but wraps it in an agentic system that can plan, retrieve
+context, reflect on its own confidence, and refine its weights when
+the result set is weak. The system still runs entirely offline and
+reproducibly (no API keys required).
 
 ---
 
-## Getting Started
+## What this system does
 
-### Setup
+**MoodMatch Agent** turns a small song catalog into a transparent,
+persona-aware recommender that can self-correct when its first answer
+isn't good enough. Given a user profile (and optionally a free-text
+context like _"music for the gym"_), the agent:
 
-1. Create a virtual environment (optional but recommended):
+1. **Routes** the request to one of five personas (default / discovery /
+   comfort / workout / study) using a few-shot keyword matcher.
+2. **Retrieves** up to three relevant passages from a curated music
+   knowledge base via TF-IDF cosine similarity.
+3. **Scores** every song with persona-aware weights (genre weight is the
+   dominant lever — higher for *comfort*, lower for *discovery*).
+4. **Reflects** on the result set by computing a 0–1 confidence value
+   that combines top-score strength, score gap, genre diversity, and
+   artist diversity.
+5. **Refines** weights and re-scores when confidence is below threshold
+   (filter-bubble fixes, valence boosts, artist-repeat penalties), then
+   reflects again.
+6. **Finalizes** the top-K with persona-toned explanations and an
+   observable `AgentTrace` of every step.
 
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
+---
 
-2. Install dependencies
+## Architecture
+
+![System architecture](assets/architecture.svg)
+
+```mermaid
+flowchart LR
+    UserPrefs["User input<br/>(genre, mood, energy,<br/>likes_acoustic, free-text context)"]
+    Guardrails["Guardrails<br/>(validate ranges,<br/>flag unknown moods)"]
+    PersonaRouter["Persona Router<br/>(few-shot keyword match)"]
+    Retriever["RAG Retriever<br/>(TF-IDF over<br/>knowledge_base.md)"]
+    KB[("data/knowledge_base.md")]
+    Catalog[("data/songs.csv")]
+    Plan["PLAN<br/>persona + retrieved<br/>context -> weights"]
+    Act["ACT<br/>score every song"]
+    Reflect["REFLECT<br/>confidence breakdown"]
+    Refine{"confidence<br/>< threshold?"}
+    Refine2["REFINE<br/>adjust weights<br/>+ artist penalty"]
+    Finalize["FINALIZE<br/>top-K + explanations"]
+    Eval["Evaluation Harness"]
+    Logs["logs/recommender.log"]
+
+    UserPrefs --> Guardrails --> PersonaRouter --> Plan
+    KB --> Retriever --> Plan
+    Plan --> Act
+    Catalog --> Act
+    Act --> Reflect --> Refine
+    Refine -- yes --> Refine2 --> Act
+    Refine -- no --> Finalize
+    Finalize --> Output["AgentResult<br/>(recs + confidence + trace)"]
+    Eval -. validates .-> Plan
+    Plan -. log .-> Logs
+    Reflect -. log .-> Logs
+```
+
+The PNG/SVG asset is in [`assets/architecture.svg`](assets/architecture.svg);
+the Mermaid source lives in [`assets/architecture.mmd`](assets/architecture.mmd).
+
+### Components
+
+| File | Responsibility |
+| --- | --- |
+| `src/agent.py` | The agentic Plan -> Act -> Reflect -> Refine loop. Returns `AgentResult` with full trace. |
+| `src/recommender.py` | Original Module-3 scoring + new `score_song_with_weights` and `recommend_with_weights` parameterized by persona. |
+| `src/retriever.py` | Offline TF-IDF retriever over `data/knowledge_base.md`. |
+| `src/personas.py` | Five personas with distinct weight overrides + few-shot keyword router. |
+| `src/confidence.py` | Confidence scoring (top-score, gap, genre & artist diversity). |
+| `src/guardrails.py` | Input validation; raises `GuardrailError` on bad prefs. |
+| `src/logging_setup.py` | Centralized logger writing to stderr and `logs/recommender.log`. |
+| `scripts/run_evaluation.py` | Test harness: 6 cases × multiple assertions, writes Markdown + JSON reports. |
+| `tests/` | 37 pytest cases across all modules. |
+
+---
+
+## Required AI feature + stretch coverage
+
+This project covers all four stretch features so the same loop earns
+credit in every category:
+
+- **Required: Agentic Workflow** — Plan / Act / Reflect / Refine with
+  observable intermediate steps in `AgentResult.trace` (see
+  `src/agent.py`, demonstrated in `src/main.py` and `tests/test_agent.py`).
+- **Stretch +2 RAG** — TF-IDF retrieval over a hand-curated music knowledge
+  base whose passages directly influence the agent's weight refinement.
+- **Stretch +2 Specialization** — Five personas with measurably different
+  weights, tone, and reranking behavior (proven in `tests/test_personas.py`
+  and the eval harness — discovery surfaces ≥3 distinct genres while
+  comfort narrows on a single genre).
+- **Stretch +2 Test Harness** — `scripts/run_evaluation.py` runs 6 cases,
+  20 assertions, and writes `assets/evaluation_report.md` and `.json`.
+
+---
+
+## Setup
 
 ```bash
+# 1. clone
+git clone https://github.com/BengalPirate/applied-ai-system-project.git
+cd applied-ai-system-project
+
+# 2. create a venv (recommended)
+python -m venv .venv
+source .venv/bin/activate     # macOS / Linux
+# .venv\Scripts\activate      # Windows
+
+# 3. install
 pip install -r requirements.txt
 ```
 
-3. Run the app:
+There are **no API keys, no embedding services, and no network calls**
+at runtime — everything runs on local files.
 
+### Run the demo (3 end-to-end cases)
 ```bash
 python -m src.main
 ```
 
-### Running Tests
-
-Run the starter tests with:
-
+### Run the test suite
 ```bash
-pytest
+pytest -q
+# expected: 37 passed
 ```
 
-You can add more tests in `tests/test_recommender.py`.
+### Run the evaluation harness
+```bash
+python -m scripts.run_evaluation
+# writes assets/evaluation_report.md and .json
+```
+
+### Logs
+Every run appends to `logs/recommender.log` with INFO-level traces of
+retrieval, persona routing, plan, reflect, and refine steps.
 
 ---
 
-## Experiments You Tried
+## Sample interactions
 
-### Profile Comparison Experiments
+The full demo output is reproducible by running `python -m src.main`. Three
+representative cases:
 
-**1. High-Energy Pop Fan vs. Chill Lofi Listener**
-- **Pop Fan Results**: Top recommendation was "Sunrise City" (score: 4.47) - perfect genre + mood + energy match
-- **Lofi Listener Results**: Top recommendations were all lofi tracks with high acousticness
-- **Observation**: The system successfully differentiates between high-energy and low-energy preferences. Genre matching has strong influence (2.0 points) which helps surface the right category.
+### 1. Lofi study session (auto-routed to `study` persona)
 
-**2. Intense Rock vs. Energetic EDM**
-- **Rock Profile**: "Storm Runner" scored 4.98 with perfect genre/mood/energy alignment
-- **EDM Profile**: "Digital Dreams" scored 5.40 (highest across all tests) due to all factors aligning including valence
-- **Observation**: Both prefer high energy (0.9+) but genre match correctly separates rock from EDM. The acousticness penalty/bonus also helps distinguish electronic (EDM) from guitar-driven (rock) music.
+**Input**
+```python
+{"genre": "lofi", "mood": "chill", "energy": 0.4, "likes_acoustic": True}
+context_text = "I need quiet music for a long library study session"
+```
 
-**3. Edge Case - Melancholic Blues with Low Energy**
-- **Result**: "Rainy Day Blues" scored 4.48 - exactly what we'd expect
-- **Observation**: The system handles users with sad moods appropriately. When only 1 song exists in the preferred genre, the system falls back to energy similarity, suggesting ambient and classical tracks with similar low energy levels.
+**Output (top 3 of 5)**
+```
+Persona: study (Low energy, prefers acoustic and lofi/ambient/jazz.)
+Confidence: 0.701 (medium)
 
-### Weight Adjustment Experiments
+1. Midnight Coding -- LoRoom [lofi/chill energy=0.42] score=5.46
+   For deep focus: Genre match: lofi (+1.00); Mood match: chill (+1.50);
+   Energy similarity: +1.96; High acousticness match (+1.00)
+2. Library Rain -- Paper Lanterns [lofi/chill energy=0.35] score=5.40
+3. Spacewalk Thoughts -- Orbit Bloom [ambient/chill energy=0.28] score=4.26
+```
 
-**Baseline Weights**:
-- Genre match: +2.0
-- Mood match: +1.0
-- Energy similarity: up to +1.5
-- Acousticness bonus: +0.5
-- Valence similarity: up to +0.5
+**Why it matters:** the agent inferred `study` from the free-text context,
+the `study` persona raised the mood and acoustic weights, and the RAG
+retriever pulled `study and focus guidance` and `lofi listener tendencies`
+into the plan step.
 
-**Finding**: Genre weight of 2.0 provides strong but not overwhelming influence. Songs can still rank high (3.0-4.0) without a genre match if they nail mood and energy. This creates a good balance between filtering by category and discovering cross-genre recommendations.
+### 2. Pop fan in Discovery mode (cross-genre exploration)
+
+**Input**
+```python
+{"genre": "pop", "mood": "happy", "energy": 0.8, "valence": 0.85}
+persona = "discovery"
+```
+
+**Output (top 3 of 5)**
+```
+Persona: discovery (Lower genre weight, surface adjacent genres.)
+Confidence: 0.750 (high)
+
+1. Sunrise City (Neon Echo) [pop/happy] score=4.46
+2. Summer Vibes (Beach Party) [tropical house/happy] score=3.74
+3. Rooftop Lights (Indigo Parade) [indie pop/happy] score=3.70
+4. Gym Hero (Max Pulse) [pop/intense] score=2.83
+5. Latin Fire (Salsa Kings) [latin/energetic] score=2.38
+```
+
+**Why it matters:** the same user prefs would surface 4–5 pop tracks under
+the `comfort` persona; under `discovery` the genre weight drops to 0.7
+and valence rises to 0.9, surfacing tropical house, indie pop, and latin.
+
+### 3. Sad blues edge case (low-data fallback)
+
+**Input**
+```python
+{"genre": "blues", "mood": "sad", "energy": 0.3}
+persona = "default"
+```
+
+**Output (top 3 of 5)**
+```
+Confidence: 0.829 (high)
+
+1. Rainy Day Blues -- Delta Soul [blues/sad] score=4.48
+2. Spacewalk Thoughts -- Orbit Bloom [ambient/chill] score=1.47
+3. Library Rain -- Paper Lanterns [lofi/chill] score=1.42
+4. Classical Sunrise -- Vienna Strings [classical/peaceful] score=1.42
+5. Coffee Shop Stories -- Slow Stereo [jazz/relaxed] score=1.40
+```
+
+**Why it matters:** there is only one blues song in the catalog. The agent
+correctly returns it as #1, then falls back to ambient / lofi / classical
+based on energy proximity rather than refusing or returning random tracks.
 
 ---
 
-## Limitations and Risks
+## Design decisions and trade-offs
 
-### Data Limitations
-- **Small catalog**: Only 25 songs means limited variety and potential for repetitive recommendations
-- **Genre imbalance**: Pop and lofi have more representation (3-4 songs each) while most genres have only 1 song, creating bias toward well-represented genres
-- **No cultural context**: The system doesn't understand lyrics, language, cultural significance, or artist reputation
+- **Offline-first.** The system is reproducible for any grader: no API
+  keys, no embeddings service, no internet. The price is a smaller RAG
+  corpus and a TF-IDF retriever instead of dense embeddings, but for an
+  11-passage knowledge base the recall is excellent.
+- **Persona weights instead of fine-tuning.** True fine-tuning is out of
+  scope for a 4-hour project; persona-based weight overrides + a tone
+  prefix simulate specialization with measurable behavioral differences
+  (proven in `tests/test_personas.py::test_personas_have_distinct_weights_from_default`
+  and `test_personas_produce_different_results`).
+- **Confidence as a single number with a breakdown.** The agent uses one
+  scalar to decide whether to refine, but the breakdown (top-score, gap,
+  genre diversity, artist diversity) is preserved so its decisions are
+  legible — not opaque.
+- **Trace as the API.** Every recommendation comes with an `AgentTrace`,
+  which is what makes the workflow auditable. The demo, the eval harness,
+  and the unit tests all read from the same trace, so the system is
+  observable in three different surfaces from the same source of truth.
+- **Conservative refinement budget.** `max_iterations=2`. Letting the
+  agent loop further would chase diminishing returns and risk masking
+  catalog limitations rather than fixing them.
+- **Original tests preserved.** The original `test_recommender.py` still
+  passes unchanged, demonstrating backward compatibility of the new
+  weight-aware scorer.
 
-### Algorithmic Biases
-- **Genre weight dominance**: The +2.0 genre bonus means users may get trapped in a "filter bubble" - always seeing their preferred genre even when other genres might match their mood/energy better
-- **Energy-centric**: Heavy emphasis on energy similarity may ignore users who care more about tempo, danceability, or lyrical themes
-- **Binary acousticness**: The 0.6 threshold for "high acousticness" is arbitrary and may misclassify songs
-- **Cold start problem**: New users without established preferences get no personalization
+---
 
-### Fairness Concerns
-- **Underrepresented genres**: A user who likes country, gothic, or classical music has very limited options (1 song each)
-- **Mood diversity**: "Happy" is overrepresented compared to "sad," potentially marginalizing users seeking emotional depth
-- **Artist diversity**: Some artists (LoRoom, Neon Echo) appear multiple times, creating potential for over-recommendation of certain artists
+## Reliability and evaluation
+
+### Pytest suite
+```
+$ pytest -q
+37 passed in 0.03s
+```
+
+Coverage by module: retriever (5 tests), agent (10), personas (8),
+guardrails (8), confidence (4), original recommender (2).
+
+### Evaluation harness
+```
+$ python -m scripts.run_evaluation
+- cases run: 6
+- cases fully passing: 6 / 6
+- assertions passed: 20 / 20 (100.0%)
+- average confidence: 0.805 (high)
+- median confidence:  0.798
+- min confidence:     0.701
+- average iterations: 1.00 (max=2)
+```
+
+The full per-case breakdown — including which assertions passed, the
+selected persona, and the top recommendations — is written to
+[`assets/evaluation_report.md`](assets/evaluation_report.md) and
+`assets/evaluation_report.json` after each run.
+
+### Confidence-driven self-correction
+`tests/test_agent.py::test_refine_step_fires_when_confidence_below_threshold`
+constructs an agent with a near-impossible threshold (0.99) and verifies
+that the trace contains both a `refine` step and a second `reflect`
+step, and that `iterations == 2`. This proves the loop closes
+correctly even though the regular catalog rarely needs it.
+
+### Guardrails
+`src/guardrails.py` validates user prefs (range checks, mood whitelist,
+type checks) before any work is done. `tests/test_guardrails.py` covers
+the happy path plus four failure modes, and `MoodMatchAgent.run()` raises
+`GuardrailError` immediately on invalid input.
+
+### Logging
+All retriever, persona, and agent steps log through the `moodmatch.*`
+logger to stderr and to a rotating `logs/recommender.log` file. This
+lets you reconstruct any run after the fact.
+
+---
+
+## Limitations, biases, and ethics
+
+- **Tiny catalog.** Only 25 songs across 18 genres. Niche genres (blues,
+  country, classical, gothic, latin, jazz fusion) have a single song
+  each, so a user who lives in those genres will see the same song every
+  time and the rest of their list comes from energy fallbacks. The agent
+  flags this in its `notes` but cannot fix it without more data.
+- **Western-centric data.** No hip-hop, K-pop, afrobeats, or
+  non-English-language music is represented. Any deployment that
+  inherited this catalog would systematically under-serve users from
+  those musical traditions.
+- **Persona keywords are English-only.** The few-shot router relies on
+  English keyword overlap and would misclassify free-text in any other
+  language.
+- **Confidence is not calibrated.** A "high" label means "the model is
+  internally consistent," not "the recommendation is good." A pop fan
+  could get high confidence and still hate every result.
+- **Filter bubbles.** The `comfort` persona deliberately narrows the
+  catalog. That's fine when surfaced as an explicit user choice, but a
+  product that defaulted to it would entrench users' existing taste.
+- **Misuse vector.** A bad-faith operator could craft personas that
+  preferentially surface sponsored artists; the architecture makes this
+  trivial because weights are just a dict. Mitigation: the trace makes
+  weight choices auditable, and the eval harness assertions are
+  human-readable enough for a reviewer to spot a thumb on the scale.
 
 ---
 
 ## Reflection
 
-Read the complete [**Model Card**](model_card.md) for full documentation.
+### What surprised me
+The biggest surprise was how rarely the refine step fires on this
+catalog. I expected the blues edge case to trigger it, but the single
+blues track scored so well (perfect genre + mood + energy match) that
+overall confidence stayed high — even though the rest of the top-5 was
+clearly fallback content. That taught me confidence has to look at
+*the shape of the result set*, not just the top score, which is why I
+ended up weighting genre and artist diversity into the formula.
 
-### What I Learned About Recommenders
+A second surprise was that the persona keyword router was good enough
+to pass every routing assertion in the eval harness. I had assumed I
+would need at least a small classifier, but the few-shot keyword
+overlap is a useful baseline that's deterministic, free, and easy to
+debug — exactly the right tool when the user already gave you the
+genre and mood explicitly.
 
-This project fundamentally changed how I understand recommendation systems. I learned that **data becomes predictions through weighted scoring**—each song attribute (genre, mood, energy) contributes points based on how closely it matches user preferences, and the system simply ranks songs by total score. What seemed like "AI magic" is actually transparent mathematics: genre match (+2.0) + mood match (+1.0) + energy similarity (+1.5) = a personalized recommendation.
+### Limitations and misuse, prevention
+The most plausible misuse is what I flagged above: weight-tuning to
+surface sponsored content. The defense built into the architecture is
+that *every weight change shows up in the trace*, including refine
+adjustments. A reviewer (or an auditor, or the user themselves) can
+read the trace and see exactly why a song was elevated. I added the
+`assets/evaluation_report.json` so this audit can also be machine-checked
+by CI in any downstream deployment.
 
-The most important insight was recognizing where **bias enters the system**. Even though my algorithm treats all genres mathematically equal, users who like pop or lofi have a better experience because those genres have more songs in the catalog. This taught me that fairness isn't just about writing unbiased code—it's about ensuring equal representation in the training data. A system can be algorithmically "fair" but still produce unfair outcomes if the dataset itself is imbalanced.
+### AI collaboration during this project
 
-I was also surprised by the **filter bubble effect** I unintentionally created. By giving genre a +2.0 weight, I made it nearly impossible for pop fans to discover jazz, even when mood and energy perfectly aligned. Real platforms like Spotify face this same challenge: how do you balance giving users what they ask for versus introducing them to new music they might love? This project showed me that recommendation systems aren't neutral—they actively shape what we discover (or don't discover).
+I worked with Claude as a pair-programmer through the whole build.
 
-Finally, building the "Because" explanations made me realize how valuable **transparency** is. When my system says "Genre match: lofi (+2.0); Mood match: chill (+1.0)," users can understand and trust the recommendation. Most real-world systems hide this logic, but this project convinced me that users deserve to see how decisions are made, especially when those decisions influence what culture and art they consume.
+**One helpful suggestion:** when I described the agent loop, Claude
+proposed treating the `AgentTrace` as the public contract — the same
+list consumed by the demo, the harness, and the tests. That single
+abstraction is what made it cheap to add observability everywhere. I
+would not have landed on it that quickly on my own.
 
+**One flawed suggestion:** my first version of `test_low_data_blues_triggers_refine`
+asserted that the blues case would fire the refine step, on the assumption
+that "only 1 song in the catalog" automatically means "low confidence."
+Claude generated that assertion with me without questioning it. The test
+failed at runtime because the single blues track is a near-perfect match
+and confidence stayed at 0.83. The right fix was to construct an agent
+with an artificially high confidence threshold (0.99) so refine fires
+deterministically; the original test conflated *catalog sparsity* with
+*low confidence*, which are not the same thing. Lesson: assertions about
+confidence behaviour need to be derived from the confidence formula, not
+from intuition about the data.
 
----
+### Loom walkthrough
+A 5–7 minute Loom walkthrough demonstrating end-to-end usage,
+persona routing, confidence behaviour, and the evaluation harness will
+be linked here once recorded:
 
-## 7. `model_card_template.md`
-
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
-
-```markdown
-# 🎧 Model Card - Music Recommender Simulation
-
-## 1. Model Name
-
-Give your recommender a name, for example:
-
-> VibeFinder 1.0
-
----
-
-## 2. Intended Use
-
-- What is this system trying to do
-- Who is it for
-
-Example:
-
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
-
----
-
-## 3. How It Works (Short Explanation)
-
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
-
----
-
-## 4. Data
-
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
+> **Loom video:** _link to be added before submission._
 
 ---
 
-## 5. Strengths
+## Repository layout
 
-Where does your recommender work well
+```
+applied-ai-system-project/
+  assets/
+    architecture.svg            # system diagram (image)
+    architecture.mmd            # mermaid source
+    evaluation_report.md        # auto-generated by harness
+    evaluation_report.json      # auto-generated by harness
+  data/
+    songs.csv                   # 25-song catalog
+    knowledge_base.md           # 11 RAG passages
+  logs/
+    recommender.log             # rotating run log (gitignored content)
+  scripts/
+    run_evaluation.py           # test harness
+  src/
+    agent.py                    # agentic loop
+    confidence.py               # confidence scoring
+    guardrails.py               # input validation
+    logging_setup.py            # centralized logger
+    main.py                     # CLI demo
+    personas.py                 # specialization layer
+    recommender.py              # original + weight-aware scoring
+    retriever.py                # TF-IDF RAG
+  tests/                        # 37 pytest cases
+  README.md
+  model_card.md                 # full reflection + ethics
+  requirements.txt
+```
 
-You can think about:
-- Situations where the top results "felt right"
-- Particular user profiles it served well
-- Simplicity or transparency benefits
-
----
-
-## 6. Limitations and Bias
-
-Where does your recommender struggle
-
-Some prompts:
-- Does it ignore some genres or moods
-- Does it treat all users as if they have the same taste shape
-- Is it biased toward high energy or one genre by default
-- How could this be unfair if used in a real product
-
----
-
-## 7. Evaluation
-
-How did you check your system
-
-Examples:
-- You tried multiple user profiles and wrote down whether the results matched your expectations
-- You compared your simulation to what a real app like Spotify or YouTube tends to recommend
-- You wrote tests for your scoring logic
-
-You do not need a numeric metric, but if you used one, explain what it measures.
-
----
-
-## 8. Future Work
-
-If you had more time, how would you improve this recommender
-
-Examples:
-
-- Add support for multiple users and "group vibe" recommendations
-- Balance diversity of songs instead of always picking the closest match
-- Use more features, like tempo ranges or lyric themes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about what you learned:
-
-- What surprised you about how your system behaved
-- How did building this change how you think about real music recommenders
-- Where do you think human judgment still matters, even if the model seems "smart"
-
+## Submission checklist
+- [x] Code pushed to public repo
+- [x] Functional code, README.md, model_card.md, system architecture diagram
+- [x] Diagram in `/assets`
+- [x] Multiple meaningful commits
+- [x] README identifies base project, model_card answers reflection prompts
+- [ ] Loom walkthrough link added (see Reflection section)
