@@ -455,9 +455,9 @@ applied-ai-system-project/
 ## Submission checklist
 Before submitting, confirm:
 
-- [ ] Code is pushed to the correct public repo
+- [x] Code is pushed to the correct public repo
 - [x] Functional code, `README.md`, `model_card.md`, and system architecture diagram are present
 - [x] Diagram and evaluation artifacts live in `assets/`
-- [ ] Commit history shows multiple meaningful commits
+- [x] Commit history shows multiple meaningful commits
 - [x] README identifies the base project and `model_card.md` answers the reflection prompts
 - [x] Loom walkthrough link has been added in the Reflection section
