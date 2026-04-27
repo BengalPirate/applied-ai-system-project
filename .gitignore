@@ -13,3 +13,11 @@ venv/
 
 # Pytest cache
 .pytest_cache/
+
+# Logs (keep folder, ignore files)
+logs/*.log
+
+# Editor
+.idea/
+.vscode/
+
